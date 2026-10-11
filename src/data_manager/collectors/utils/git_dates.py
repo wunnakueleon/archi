@@ -16,7 +16,11 @@ logger = get_logger(__name__)
 def last_commit_dates(repo_path: Path) -> Dict[str, str]:
     """Return a mapping of repo-relative file paths to their last commit date (UTC, ISO 8601)."""
     try:
-        log_output = Repo(repo_path).git(c="core.quotepath=off").log("--format=@@%cI", "--name-only")
+        log_output = (
+            Repo(repo_path)
+            .git(c="core.quotepath=off")
+            .log("--format=@@%cI", "--name-only")
+        )
     except (GitCommandError, InvalidGitRepositoryError) as exc:
         logger.warning(f"Could not read git history for {repo_path}: {exc}")
         return {}
@@ -28,9 +32,11 @@ def last_commit_dates(repo_path: Path) -> Dict[str, str]:
             continue
 
         if line.startswith("@@"):
-            current_date = datetime.fromisoformat(line[2:]).astimezone(timezone.utc).isoformat()
+            current_date = (
+                datetime.fromisoformat(line[2:]).astimezone(timezone.utc).isoformat()
+            )
             continue
-        
+
         if line not in dates:
             dates[line] = current_date
 
