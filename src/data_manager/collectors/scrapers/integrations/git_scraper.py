@@ -9,6 +9,7 @@ from mkdocs.utils.yaml import yaml_load
 
 from src.utils.config_access import get_global_config
 from src.data_manager.collectors.scrapers.scraped_resource import ScrapedResource
+from src.data_manager.collectors.utils.git_dates import last_commit_dates
 from src.utils.env import read_secret
 from src.utils.logging import get_logger
 
@@ -131,6 +132,7 @@ class GitScraper:
             "mkdocs_site_url": mkdocs_site_url,
             "ref": ref,
             "web_base_url": web_base_url,
+            "modified_dates": last_commit_dates(repo_path),
         }
 
     def _harvest_repository(self, repo_info: Dict[str, Any]) -> List[ScrapedResource]:
@@ -161,16 +163,20 @@ class GitScraper:
             logger.info(f"Indexing Git doc: {current_url}")
             text_content = markdown_path.read_text(encoding="utf-8")
             relative_path = Path(parent_repo) / markdown_path.relative_to(repo_path)
+            metadata = {
+                "repo_path": str(markdown_path.relative_to(repo_path)),
+                "title": markdown_path.stem.replace("_", " ").replace("-", " ").title(),
+                "parent": parent_repo,
+            }
+            modified_at = repo_info["modified_dates"].get(markdown_path.relative_to(repo_path).as_posix())
+            if modified_at:
+                metadata["modified_at"] = modified_at
             resource = ScrapedResource(
                 url=current_url,
                 content=text_content,
                 suffix=markdown_path.suffix.lstrip(".") or "txt",
                 source_type="git",
-                metadata={
-                    "repo_path": str(markdown_path.relative_to(repo_path)),
-                    "title": markdown_path.stem.replace("_", " ").replace("-", " ").title(),
-                    "parent": parent_repo,
-                },
+                metadata=metadata,
                 file_name=markdown_path.name,
                 relative_path=str(relative_path),
             )
@@ -224,16 +230,20 @@ class GitScraper:
 
             resource_url = self._build_blob_url(base_url, ref, rel_path)
             relative_path = Path(repo_name) / rel_path
+            metadata = {
+                "repo_path": str(rel_path),
+                "parent": repo_name,
+                "ref": ref,
+            }
+            modified_at = repo_info["modified_dates"].get(rel_path.as_posix())
+            if modified_at:
+                metadata["modified_at"] = modified_at
             resource = ScrapedResource(
                 url=resource_url,
                 content=text_content,
                 suffix=file_path.suffix.lstrip("."),
                 source_type="git",
-                metadata={
-                    "repo_path": str(rel_path),
-                    "parent": repo_name,
-                    "ref": ref,
-                },
+                metadata=metadata,
                 file_name=file_path.name,
                 relative_path=str(relative_path),
             )

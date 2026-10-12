@@ -85,7 +85,7 @@ Link scraping is controlled by your config (`data_manager.sources.links.enabled`
 
 ## Git Scraping
 
-Ingest content from MkDocs-based git repositories using the `GitScraper` class, which extracts Markdown content directly instead of scraping rendered HTML.
+Ingest content from MkDocs-based git repositories using the `GitScraper` class, which extracts Markdown content directly instead of scraping rendered HTML. Each scraped file also records `modified_at`, the date of its last commit (UTC, ISO 8601), so documents can be sorted by how recently they changed.
 
 ### Configuration
 
